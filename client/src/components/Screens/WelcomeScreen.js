@@ -4,7 +4,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const WelcomeScreen = ({ onNext, onClose }) => {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentPair, setCurrentPair] = useState(0);
 
   const listings = [
     { id: 1, image: 'https://via.placeholder.com/400x320' },
@@ -25,30 +25,35 @@ const WelcomeScreen = ({ onNext, onClose }) => {
   const reviews = [
     { 
       id: 1, 
-      name: 'James Alex', 
+      name: "Nicole McFear", 
       rating: 5, 
-      text: 'This is a perfect fit and choice for me because the team is helpful and knowledgeable at what they do and clearly...'
+      text: "Dealing at a different property was like having the comfort of home with their warm consideration. It really my searching job and brought best results!"
     },
     { 
       id: 2, 
-      name: 'Sarah Smith', 
-      rating: 4, 
-      text: 'The best property agency I\'ve dealt with so far. The staff is very cooperative, and they know what they\'re doing...'
+      name: "Edward Arthur", 
+      rating: 5, 
+      text: "Our family process as a member did a very perfect approach, but friends, and reliable. It felt like a real home away from home!"
     },
     { 
       id: 3, 
-      name: 'Mike Johnson', 
+      name: "Mike Johnson", 
       rating: 5, 
-      text: 'Exceptional service and attention to detail. Highly recommended for anyone looking for property solutions...'
+      text: "Exceptional service and attention to detail. Highly recommended for anyone looking for property solutions..."
     }
   ];
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % reviews.length);
+    setCurrentPair((prev) => (prev + 1) % Math.ceil(reviews.length / 2));
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + reviews.length) % reviews.length);
+    setCurrentPair((prev) => (prev - 1 + Math.ceil(reviews.length / 2)) % Math.ceil(reviews.length / 2));
+  };
+
+  const getCurrentPairOfReviews = () => {
+    const startIndex = currentPair * 2;
+    return reviews.slice(startIndex, startIndex + 2);
   };
 
   return (
@@ -113,36 +118,48 @@ const WelcomeScreen = ({ onNext, onClose }) => {
 
           {/* Reviews Section */}
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">
+            <h2 className="text-lg font-semibold mb-6 text-center">
               See what Others are saying about Homestyle Realty
             </h2>
             <div className="relative">
               <div className="flex items-center">
-                <IconButton onClick={prevSlide} size="small">
+                <IconButton 
+                  onClick={prevSlide} 
+                  size="small"
+                  className="hover:text-[#A36404] transition-colors"
+                >
                   <ChevronLeftIcon />
                 </IconButton>
                 <div className="flex-1 px-4">
-                  <div className="flex items-start gap-4">
-                    <div 
-                      className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center"
-                      style={{ backgroundColor: 'rgba(163, 100, 4, 0.25)' }}
-                    >
-                      {reviews[currentSlide].name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{reviews[currentSlide].name}</span>
-                        <div className="flex">
-                          {[...Array(reviews[currentSlide].rating)].map((_, i) => (
-                            <span key={i} style={{ color: '#A36404' }}>★</span>
-                          ))}
+                  <div className="grid grid-cols-2 gap-6">
+                    {getCurrentPairOfReviews().map((review) => (
+                      <div key={review.id} className="flex flex-col items-center text-center">
+                        <div 
+                          className="w-12 h-12 rounded-full mb-3 flex-shrink-0 flex items-center justify-center"
+                          style={{ backgroundColor: 'rgba(163, 100, 4, 0.25)' }}
+                        >
+                          {review.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="flex flex-col items-center gap-1 mb-2">
+                            <span className="font-medium">{review.name}</span>
+                            <div className="flex">
+                              {[...Array(review.rating)].map((_, i) => (
+                                <span key={i} style={{ color: '#A36404' }}>★</span>
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 max-w-[250px]">{review.text}</p>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600">{reviews[currentSlide].text}</p>
-                    </div>
+                    ))}
                   </div>
                 </div>
-                <IconButton onClick={nextSlide} size="small">
+                <IconButton 
+                  onClick={nextSlide} 
+                  size="small"
+                  className="hover:text-[#A36404] transition-colors"
+                >
                   <ChevronRightIcon />
                 </IconButton>
               </div>
