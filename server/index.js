@@ -2,167 +2,120 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
-const { submissionValidation, validate } = require('./middleware/validation');
-const logger = require('./utils/logger');
 
 dotenv.config();
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Database connection
+// Create MySQL connection pool
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'requester_db',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 });
 
+// Test database connection
+pool.getConnection()
+  .then(connection => {
+    console.log('Successfully connected to the database.');
+    console.log('Database config:', {
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      database: process.env.DB_NAME || 'requester_db'
+    });
+    connection.release();
+  })
+  .catch(err => {
+    console.error('Error connecting to the database:', err);
+    process.exit(1); // Exit if we can't connect to the database
+  });
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Submission endpoint
+app.post('/api/submissions', async (req, res) => {
+  try {
+    console.log('Received submission:', req.body);
+
+    const {
+      location,
+      propertyNeed,
+      aboutYou,
+      aboutNeed,
+      name,
+      email,
+      whatsapp,
+      status
+    } = req.body;
+
+    // Input validation
+    if (!location || !propertyNeed || !aboutYou || !aboutNeed || !name || !email || !whatsapp || !status) {
+      console.log('Validation failed - missing fields:', {
+        location: !!location,
+        propertyNeed: !!propertyNeed,
+        aboutYou: !!aboutYou,
+        aboutNeed: !!aboutNeed,
+        name: !!name,
+        email: !!email,
+        whatsapp: !!whatsapp,
+        status: !!status
+      });
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.log('Invalid email format:', email);
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Insert into database
+    const [result] = await pool.execute(
+      `INSERT INTO submissions 
+       (location, property_need, about_you, about_need, name, email, whatsapp, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [location, propertyNeed, aboutYou, aboutNeed, name, email, whatsapp, status]
+    );
+
+    console.log('Submission successful:', result);
+
+    res.status(201).json({
+      message: 'Submission successful',
+      submissionId: result.insertId
+    });
+
+  } catch (error) {
+    console.error('Error processing submission:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
-  logger.error('Error:', err);
-  res.status(500).json({ message: 'Internal server error' });
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
-// GET /api/listings with filters
-app.get('/api/listings', async (req, res) => {
-  try {
-    const { location, type, status, minPrice, maxPrice } = req.query;
-    let query = 'SELECT * FROM listings WHERE 1=1';
-    const params = [];
-
-    if (location) {
-      query += ' AND location LIKE ?';
-      params.push(`%${location}%`);
-    }
-    if (type) {
-      query += ' AND property_type = ?';
-      params.push(type);
-    }
-    if (status) {
-      query += ' AND status = ?';
-      params.push(status);
-    }
-    if (minPrice) {
-      query += ' AND price >= ?';
-      params.push(minPrice);
-    }
-    if (maxPrice) {
-      query += ' AND price <= ?';
-      params.push(maxPrice);
-    }
-
-    query += ' ORDER BY created_at DESC LIMIT 8';
-
-    const [rows] = await pool.execute(query, params);
-    logger.info(`Retrieved ${rows.length} listings`);
-    res.json(rows);
-  } catch (error) {
-    logger.error('Listings error:', error);
-    res.status(500).json({ message: 'Failed to fetch listings' });
-  }
-});
-
-// GET /api/reviews with filtering
-app.get('/api/reviews', async (req, res) => {
-  try {
-    const { minRating } = req.query;
-    let query = 'SELECT r.*, u.name as author FROM reviews r JOIN users u ON r.user_id = u.id';
-    const params = [];
-
-    if (minRating) {
-      query += ' WHERE rating >= ?';
-      params.push(minRating);
-    }
-
-    query += ' ORDER BY rating DESC, created_at DESC LIMIT 10';
-
-    const [rows] = await pool.execute(query, params);
-    logger.info(`Retrieved ${rows.length} reviews`);
-    res.json(rows);
-  } catch (error) {
-    logger.error('Reviews error:', error);
-    res.status(500).json({ message: 'Failed to fetch reviews' });
-  }
-});
-
-// POST /api/submissions with enhanced validation
-app.post('/api/submissions', submissionValidation, validate, async (req, res) => {
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    const { name, email, whatsapp, location, propertyNeed, about, need, status } = req.body;
-
-    // Create or find user
-    const [existingUser] = await connection.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
-    );
-
-    let userId;
-    if (existingUser.length > 0) {
-      userId = existingUser[0].id;
-      // Update user info
-      await connection.execute(
-        'UPDATE users SET name = ?, whatsapp = ? WHERE id = ?',
-        [name, whatsapp, userId]
-      );
-    } else {
-      const [result] = await connection.execute(
-        'INSERT INTO users (name, email, whatsapp) VALUES (?, ?, ?)',
-        [name, email, whatsapp]
-      );
-      userId = result.insertId;
-    }
-
-    // Create submission
-    await connection.execute(
-      `INSERT INTO submissions (user_id, location, property_need, about, need, status) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [userId, location, propertyNeed, about, need, status]
-    );
-
-    await connection.commit();
-    logger.info(`New submission created for user ${userId}`);
-    res.status(201).json({ message: 'Submission successful' });
-  } catch (error) {
-    await connection.rollback();
-    logger.error('Submission error:', error);
-    res.status(500).json({ message: 'Failed to submit request' });
-  } finally {
-    connection.release();
-  }
-});
-
-// GET /api/submissions/:id - Get submission details
-app.get('/api/submissions/:id', async (req, res) => {
-  try {
-    const [rows] = await pool.execute(
-      `SELECT s.*, u.name, u.email, u.whatsapp 
-       FROM submissions s 
-       JOIN users u ON s.user_id = u.id 
-       WHERE s.id = ?`,
-      [req.params.id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Submission not found' });
-    }
-
-    logger.info(`Retrieved submission ${req.params.id}`);
-    res.json(rows[0]);
-  } catch (error) {
-    logger.error('Submission retrieval error:', error);
-    res.status(500).json({ message: 'Failed to fetch submission' });
-  }
-});
-
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`API available at http://localhost:${PORT}/api`);
 }); 
