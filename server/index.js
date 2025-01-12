@@ -14,29 +14,82 @@ app.use(express.json());
 // Create MySQL connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  user: process.env.DB_USER || 'romsql',
+  password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME || 'requester_db',
+  port: 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0
 });
 
 // Test database connection
-pool.getConnection()
-  .then(connection => {
+const testConnection = async () => {
+  try {
+    const connection = await pool.getConnection();
     console.log('Successfully connected to the database.');
     console.log('Database config:', {
       host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      database: process.env.DB_NAME || 'requester_db'
+      user: process.env.DB_USER || 'romsql',
+      database: process.env.DB_NAME || 'requester_db',
+      port: 3306
     });
     connection.release();
-  })
-  .catch(err => {
-    console.error('Error connecting to the database:', err);
-    process.exit(1); // Exit if we can't connect to the database
+    
+    // Create database if it doesn't exist
+    await pool.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'requester_db'}`);
+    
+    // Use the database
+    await pool.query(`USE ${process.env.DB_NAME || 'requester_db'}`);
+    
+    // Create table if it doesn't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS submissions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        location VARCHAR(255) NOT NULL,
+        property_need VARCHAR(50) NOT NULL,
+        about_you TEXT NOT NULL,
+        about_need TEXT NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        whatsapp VARCHAR(50) NOT NULL,
+        status VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    
+    console.log('Database and table setup completed.');
+  } catch (err) {
+    console.error('Database connection error:', {
+      message: err.message,
+      code: err.code,
+      errno: err.errno,
+      sqlState: err.sqlState,
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'romsql'
+    });
+    process.exit(1);
+  }
+};
+
+// Initialize database connection and start server
+const startServer = async () => {
+  await testConnection();
+  
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`API available at http://localhost:${PORT}/api`);
   });
+};
+
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -112,10 +165,4 @@ app.use((err, req, res, next) => {
     error: 'Internal server error',
     details: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`API available at http://localhost:${PORT}/api`);
 }); 
