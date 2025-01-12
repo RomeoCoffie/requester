@@ -136,9 +136,9 @@ const WelcomeScreen = ({ onNext, onClose }) => {
   };
 
   return (
-    <div className="bg-white">
-      {/* Header Section */}
-      <div className="flex justify-between items-center p-4 border-b w-full">
+    <div className="flex flex-col h-full">
+      {/* Header Section - Fixed */}
+      <div className="sticky top-0 flex justify-between items-center p-4 border-b w-full bg-white z-10">
         <button 
           onClick={onClose}
           className="text-gray-600 hover:text-gray-800"
@@ -152,109 +152,113 @@ const WelcomeScreen = ({ onNext, onClose }) => {
         </div>
       </div>
 
-      {/* Main Content Section with 40/60 split */}
-      <div className="flex">
-        {/* Left Section - 40% */}
-        <div className="w-[40%] p-6">
-          <div className="grid grid-cols-2 gap-4">
-            {listings.map((listing) => (
-              <div 
-                key={listing.id} 
-                className="aspect-square rounded-lg overflow-hidden bg-[#f5f5f5] relative"
-              >
-                <img 
-                  src={failedImages.has(listing.id) ? listing.fallback : listing.image}
-                  alt={listing.alt}
-                  onError={() => handleImageError(listing.id)}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Section - 60% */}
-        <div className="w-[60%] p-6">
-          {/* Title and Description */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-4">Wanted Request</h1>
-            <p className="text-gray-600">
-              Unsure if our wide range of services is suitable for you? Do you have 
-              a different need than what is shared on our site? Not to worry just 
-              do wanted request and we will help you with it.
-            </p>
-          </div>
-
-          {/* Keywords Grid */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            {keywords.map((keyword, index) => (
-              <div 
-                key={index} 
-                className="flex items-center gap-2 p-2"
-              >
-                {keyword.icon}
-                <span className="text-sm text-[#A36404]">{keyword.text}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Reviews Section */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-6 text-center">
-              See what Others are saying about Homestyle Realty
-            </h2>
-            <div className="relative">
-              <div className="flex items-center">
-                <IconButton 
-                  onClick={prevSlide} 
-                  size="small"
-                  className="hover:text-[#A36404] transition-colors"
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Main Content Section */}
+        <div className="flex flex-col md:flex-row">
+          {/* Left Section - Images */}
+          <div className="w-full md:w-[40%] p-4 md:p-6">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              {listings.map((listing) => (
+                <div 
+                  key={listing.id} 
+                  className="aspect-square rounded-lg overflow-hidden bg-[#f5f5f5] relative"
                 >
-                  <ChevronLeftIcon />
-                </IconButton>
-                <div className="flex-1 px-4">
-                  <div className="grid grid-cols-2 gap-6">
-                    {getCurrentPairOfReviews().map((review) => (
-                      <div key={review.id} className="flex flex-col items-center text-center">
-                        <div 
-                          className="w-12 h-12 rounded-full mb-3 flex-shrink-0 flex items-center justify-center"
-                          style={{ backgroundColor: 'rgba(163, 100, 4, 0.25)' }}
-                        >
-                          {review.name.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="flex flex-col items-center gap-1 mb-2">
-                            <span className="font-medium">{review.name}</span>
-                            <div className="flex">
-                              {[...Array(review.rating)].map((_, i) => (
-                                <span key={i} style={{ color: '#A36404' }}>★</span>
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-600 max-w-[250px]">{review.text}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <img 
+                    src={failedImages.has(listing.id) ? listing.fallback : listing.image}
+                    alt={listing.alt}
+                    onError={() => handleImageError(listing.id)}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
                 </div>
-                <IconButton 
-                  onClick={nextSlide} 
-                  size="small"
-                  className="hover:text-[#A36404] transition-colors"
-                >
-                  <ChevronRightIcon />
-                </IconButton>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* CTA Button */}
-          <button
-            onClick={onNext}
-            className="w-full bg-black text-white rounded-lg py-3 font-semibold hover:bg-opacity-90 transition-colors"
-          >
-            Do Tailored Request
-          </button>
+          {/* Right Section - Content */}
+          <div className="w-full md:w-[60%] p-4 md:p-6">
+            {/* Title and Description */}
+            <div className="mb-6 md:mb-8">
+              <h1 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Wanted Request</h1>
+              <p className="text-gray-600 text-sm md:text-base">
+                Unsure if our wide range of services is suitable for you? Do you have 
+                a different need than what is shared on our site? Not to worry just 
+                do wanted request and we will help you with it.
+              </p>
+            </div>
+
+            {/* Keywords Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+              {keywords.map((keyword, index) => (
+                <div 
+                  key={index} 
+                  className="flex items-center gap-2 p-2"
+                >
+                  {keyword.icon}
+                  <span className="text-xs md:text-sm text-[#A36404]">{keyword.text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Reviews Section */}
+            <div className="mb-6 md:mb-8">
+              <h2 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-center">
+                See what Others are saying about Homestyle Realty
+              </h2>
+              <div className="relative">
+                <div className="flex items-center">
+                  <IconButton 
+                    onClick={prevSlide} 
+                    size="small"
+                    className="hover:text-[#A36404] transition-colors"
+                  >
+                    <ChevronLeftIcon />
+                  </IconButton>
+                  <div className="flex-1 px-2 md:px-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                      {getCurrentPairOfReviews().map((review) => (
+                        <div key={review.id} className="flex flex-col items-center text-center">
+                          <div 
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-full mb-2 md:mb-3 flex-shrink-0 flex items-center justify-center"
+                            style={{ backgroundColor: 'rgba(163, 100, 4, 0.25)' }}
+                          >
+                            {review.name.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="flex flex-col items-center gap-1 mb-2">
+                              <span className="font-medium text-sm md:text-base">{review.name}</span>
+                              <div className="flex">
+                                {[...Array(review.rating)].map((_, i) => (
+                                  <span key={i} className="text-sm md:text-base" style={{ color: '#A36404' }}>★</span>
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-xs md:text-sm text-gray-600 max-w-[250px]">{review.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <IconButton 
+                    onClick={nextSlide} 
+                    size="small"
+                    className="hover:text-[#A36404] transition-colors"
+                  >
+                    <ChevronRightIcon />
+                  </IconButton>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <button
+              onClick={onNext}
+              className="w-full bg-black text-white rounded-lg py-2.5 md:py-3 text-sm md:text-base font-semibold hover:bg-opacity-90 transition-colors mb-4"
+            >
+              Do Tailored Request
+            </button>
+          </div>
         </div>
       </div>
     </div>
