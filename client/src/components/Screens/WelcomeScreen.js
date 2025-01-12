@@ -101,19 +101,22 @@ const WelcomeScreen = ({ onNext, onClose }) => {
     { 
       id: 1, 
       name: "Nicole McFear", 
-      rating: 5, 
+      rating: 5,
+      image: "https://randomuser.me/api/portraits/women/32.jpg",
       text: "Dealing at a different property was like having the comfort of home with their warm consideration. It really my searching job and brought best results!"
     },
     { 
       id: 2, 
       name: "Edward Arthur", 
-      rating: 5, 
+      rating: 5,
+      image: "https://randomuser.me/api/portraits/men/45.jpg",
       text: "Our family process as a member did a very perfect approach, but friends, and reliable. It felt like a real home away from home!"
     },
     { 
       id: 3, 
       name: "Mike Johnson", 
-      rating: 5, 
+      rating: 5,
+      image: "https://randomuser.me/api/portraits/men/22.jpg",
       text: "Exceptional service and attention to detail. Highly recommended for anyone looking for property solutions..."
     }
   ];
@@ -140,8 +143,9 @@ const WelcomeScreen = ({ onNext, onClose }) => {
       {/* Header Section - Fixed */}
       <div className="sticky top-0 flex justify-between items-center p-4 border-b w-full bg-white z-10">
         <button 
-          onClick={onClose}
-          className="text-gray-600 hover:text-gray-800"
+          onClick={() => onClose()}
+          className="text-gray-600 hover:text-gray-800 p-2"
+          aria-label="Close modal"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -220,10 +224,13 @@ const WelcomeScreen = ({ onNext, onClose }) => {
                       {getCurrentPairOfReviews().map((review) => (
                         <div key={review.id} className="flex flex-col items-center text-center">
                           <div 
-                            className="w-10 h-10 md:w-12 md:h-12 rounded-full mb-2 md:mb-3 flex-shrink-0 flex items-center justify-center"
-                            style={{ backgroundColor: 'rgba(163, 100, 4, 0.25)' }}
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-full mb-2 md:mb-3 flex-shrink-0 overflow-hidden"
                           >
-                            {review.name.charAt(0)}
+                            <img 
+                              src={review.image} 
+                              alt={review.name}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                           <div>
                             <div className="flex flex-col items-center gap-1 mb-2">
@@ -252,12 +259,14 @@ const WelcomeScreen = ({ onNext, onClose }) => {
             </div>
 
             {/* CTA Button */}
-            <button
-              onClick={onNext}
-              className="w-full bg-black text-white rounded-lg py-2.5 md:py-3 text-sm md:text-base font-semibold hover:bg-opacity-90 transition-colors mb-4"
-            >
-              Do Tailored Request
-            </button>
+            <div className="flex justify-center">
+              <button
+                onClick={onNext}
+                className="bg-black text-white rounded-lg py-2.5 md:py-3 px-8 md:px-10 text-sm md:text-base font-semibold hover:bg-opacity-90 transition-colors mb-4"
+              >
+                Do Tailored Request
+              </button>
+            </div>
           </div>
         </div>
       </div>

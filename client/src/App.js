@@ -24,7 +24,8 @@ const App = () => {
       case 'welcome':
         return (
           <WelcomeScreen 
-            onNext={() => setCurrentScreen('form')} 
+            onNext={() => setCurrentScreen('form')}
+            onClose={handleCloseModal}
           />
         );
       case 'form':
@@ -34,6 +35,7 @@ const App = () => {
               setFormData(data);
               setCurrentScreen('confirmation');
             }}
+            onClose={handleCloseModal}
           />
         );
       case 'confirmation':
