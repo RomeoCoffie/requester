@@ -5,21 +5,96 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const WelcomeScreen = ({ onNext, onClose }) => {
   const [currentPair, setCurrentPair] = useState(0);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   const listings = [
-    { id: 1, image: 'https://via.placeholder.com/400x320' },
-    { id: 2, image: 'https://via.placeholder.com/400x320' },
-    { id: 3, image: 'https://via.placeholder.com/400x320' },
-    { id: 4, image: 'https://via.placeholder.com/400x320' }
+    { 
+      id: 1, 
+      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=320&auto=format&fit=crop',
+      fallback: 'https://via.placeholder.com/400x320/f5f5f5/a36404?text=Luxury+Home',
+      alt: 'Modern luxury home with pool'
+    },
+    { 
+      id: 2, 
+      image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=400&h=320&auto=format&fit=crop',
+      fallback: 'https://via.placeholder.com/400x320/f5f5f5/a36404?text=Bedroom',
+      alt: 'Modern bedroom interior'
+    },
+    { 
+      id: 3, 
+      image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=400&h=320&auto=format&fit=crop',
+      fallback: 'https://via.placeholder.com/400x320/f5f5f5/a36404?text=Living+Room',
+      alt: 'Luxury living room'
+    },
+    { 
+      id: 4, 
+      image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=320&auto=format&fit=crop',
+      fallback: 'https://via.placeholder.com/400x320/f5f5f5/a36404?text=Modern+Home',
+      alt: 'Modern house exterior'
+    }
   ];
 
   const keywords = [
-    { icon: '📄', text: 'Any Request' },
-    { icon: '🏠', text: 'Any Property' },
-    { icon: '👤', text: 'Any Person' },
-    { icon: '📍', text: 'Any Location' },
-    { icon: '🔧', text: 'Any Service' },
-    { icon: '💼', text: 'Any Business' }
+    { 
+      text: 'Any Request',
+      icon: (
+        <div className="w-5 h-5 rounded bg-[rgba(163,100,4,0.25)] flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="#A36404" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      )
+    },
+    { 
+      text: 'Any Property',
+      icon: (
+        <div className="w-5 h-5 rounded bg-[rgba(163,100,4,0.25)] flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="#A36404" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      )
+    },
+    { 
+      text: 'Any Person',
+      icon: (
+        <div className="w-5 h-5 rounded bg-[rgba(163,100,4,0.25)] flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="#A36404" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      )
+    },
+    { 
+      text: 'Any Location',
+      icon: (
+        <div className="w-5 h-5 rounded bg-[rgba(163,100,4,0.25)] flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="#A36404" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      )
+    },
+    { 
+      text: 'Any Service',
+      icon: (
+        <div className="w-5 h-5 rounded bg-[rgba(163,100,4,0.25)] flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="#A36404" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      )
+    },
+    { 
+      text: 'Any Business',
+      icon: (
+        <div className="w-5 h-5 rounded bg-[rgba(163,100,4,0.25)] flex items-center justify-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="#A36404" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      )
+    }
   ];
 
   const reviews = [
@@ -42,6 +117,10 @@ const WelcomeScreen = ({ onNext, onClose }) => {
       text: "Exceptional service and attention to detail. Highly recommended for anyone looking for property solutions..."
     }
   ];
+
+  const handleImageError = (listingId) => {
+    setFailedImages(prev => new Set([...prev, listingId]));
+  };
 
   const nextSlide = () => {
     setCurrentPair((prev) => (prev + 1) % Math.ceil(reviews.length / 2));
@@ -79,11 +158,15 @@ const WelcomeScreen = ({ onNext, onClose }) => {
         <div className="w-[40%] p-6">
           <div className="grid grid-cols-2 gap-4">
             {listings.map((listing) => (
-              <div key={listing.id} className="aspect-square rounded-lg overflow-hidden">
+              <div 
+                key={listing.id} 
+                className="aspect-square rounded-lg overflow-hidden bg-[#f5f5f5] relative"
+              >
                 <img 
-                  src={listing.image} 
-                  alt={`Listing ${listing.id}`}
-                  className="w-full h-full object-cover"
+                  src={failedImages.has(listing.id) ? listing.fallback : listing.image}
+                  alt={listing.alt}
+                  onError={() => handleImageError(listing.id)}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
               </div>
             ))}
@@ -107,11 +190,10 @@ const WelcomeScreen = ({ onNext, onClose }) => {
             {keywords.map((keyword, index) => (
               <div 
                 key={index} 
-                className="flex items-center gap-2 p-3 rounded-lg"
-                style={{ backgroundColor: 'rgba(163, 100, 4, 0.25)' }}
+                className="flex items-center gap-2 p-2"
               >
-                <span>{keyword.icon}</span>
-                <span className="text-sm" style={{ color: '#A36404' }}>{keyword.text}</span>
+                {keyword.icon}
+                <span className="text-sm text-[#A36404]">{keyword.text}</span>
               </div>
             ))}
           </div>
